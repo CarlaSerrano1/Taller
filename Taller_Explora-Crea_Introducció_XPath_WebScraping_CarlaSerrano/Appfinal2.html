@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lector RSS</title>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css">
+<style>
+    .banner {
+        background-color: #007bff;
+        color: #fff;
+        text-align: center;
+        padding: 20px 0;
+        margin-bottom: 20px;
+    }
+
+    .banner h1 {
+        font-size: 2em;
+        margin-bottom: 10px;
+    }
+
+    .banner h2 {
+        font-size: 1.5em;
+        margin-bottom: 0;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 20px;
+    }
+
+    .noticia {
+        width: 30%;
+        float: left;
+        margin: 10px;
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .noticia:hover {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .noticia h2 {
+        font-size: 1.2em;
+        margin-bottom: 5px;
+        color: #333;
+    }
+
+    .noticia img {
+        width: 100%;
+        height: auto;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .noticia p {
+        font-size: 0.9em;
+        color: #666;
+    }
+
+    .noticia a {
+        text-decoration: none;
+        color: #007bff;
+        display: block;
+    }
+
+    .noticia a:hover {
+        text-decoration: underline;
+    }
+
+    .audio-container {
+        margin-top: 10px;
+    }
+
+    .footer {
+        background-color: #333;
+        color: #fff;
+        padding: 20px 0;
+        text-align: center;
+        clear: both;
+    }
+
+    .footer a {
+        color: #fff;
+        text-decoration: none;
+        margin: 0 10px;
+    }
+
+    .footer-links {
+        float: left;
+        text-align: left;
+        margin-bottom: 10px;
+    }
+
+    .footer-social {
+        float: right;
+        text-align: right;
+    }
+
+    .footer-social a {
+        margin-left: 10px;
+    }
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <h1>Notícies al minut</h1>
+  <h2>Diari Ara</h2>
+</div>
+
+<div class="container">
+  <div class="consulta-container">
+    <input type="text" id="cercar" placeholder="Cercar...">
+    <input type="submit" value="Cercar" onclick="cercar()">
+  </div>
+
+  <div id="noticia">
+    <h2>Resultados de la búsqueda:</h2>
+    <ul></ul>
+  </div>
+
+<div class="footer">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6 text-left">
+        &copy; 2024 Diari Ara
+        <a href="#">Inici</a>
+        <a href="#">API</a>
+        <a href="#">Contacte</a>
+      </div>
+      <div class="col-md-6 text-right">
+        <a href="#"><img src="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/facebook.svg" alt="Facebook"></a>
+        <a href="#"><img src="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/twitter.svg" alt="Twitter"></a>
+        <a href="#"><img src="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/instagram.svg" alt="Instagram"></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const rssUrl = "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada";
+  let adaptacioPodcast = false;
+
+  const resposta = prompt("Vols adaptar el codi per a podcasts? (Sí / No)");
+  if (resposta.toLowerCase() === 'sí' || resposta.toLowerCase() === 'si') {
+    adaptacioPodcast = true;
+  }
+
+  fetch(rssUrl)
+    .then(response => response.text())
+    .then(data => {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(data, "text/xml");
+      const items = xmlDoc.querySelectorAll('item');
+      const noticiesDiv = document.getElementById('noticia');
+
+      items.forEach(item => {
+        const titol = item.querySelector('title').textContent;
+        const descripcio = item.querySelector('description').textContent;
+        const enllac = item.querySelector('link').textContent;
+        let imatge = '';
+        let contingutMultimedia = '';
+
+        if (adaptacioPodcast) {
+          imatge = item.querySelector('media\\:thumbnail, thumbnail') ? item.querySelector('media\\:thumbnail, thumbnail').getAttribute('url') : '';
+          contingutMultimedia = item.querySelector('enclosure') ? item.querySelector('enclosure').getAttribute('url') : '';
+        } else {
+          imatge = item.querySelector('media\\:content, content') ? item.querySelector('media\\:content, content').getAttribute('url') : '';
+        }
+
+        const noticiaDiv = document.createElement('div');
+        noticiaDiv.classList.add('noticia');
+
+        const titolElement = document.createElement('h2');
+        titolElement.textContent = titol;
+
+        const imatgeElement = document.createElement('img');
+        imatgeElement.src = imatge;
+
+        const descripcioElement = document.createElement('p');
+        descripcioElement.textContent = descripcio.substring(0, 100) + '...';
+
+        const enllacElement = document.createElement('a');
+        enllacElement.href = enllac;
+        enllacElement.target = "_blank";
+        enllacElement.appendChild(titolElement);
+
+        noticiaDiv.appendChild(enllacElement);
+        noticiaDiv.appendChild(imatgeElement);
+        noticiaDiv.appendChild(descripcioElement);
+
+        if (adaptacioPodcast) {
+          const audioElement = document.createElement('audio');
+          audioElement.controls = true;
+          const sourceElement = document.createElement('source');
+          sourceElement.src = contingutMultimedia;
+          sourceElement.type = 'audio/mpeg';
+          audioElement.appendChild(sourceElement);
+          noticiaDiv.appendChild(audioElement);
+        }
+
+        noticiesDiv.appendChild(noticiaDiv);
+      });
+    });
+});
+
+function cercar() {
+  const cerca = document.getElementById('cercar').value.toLowerCase();
+  const noticies = document.querySelectorAll('.noticia');
+
+  noticies.forEach(noticia => {
+    const titol = noticia.querySelector('h2').textContent.toLowerCase();
+    const descripcio = noticia.querySelector('p').textContent.toLowerCase();
+
+    if (titol.includes(cerca) || descripcio.includes(cerca)) {
+      noticia.style.display = 'block';
+    } else {
+      noticia.style.display = 'none';
+    }
+  });
+}
+</script>
+
+</body>
+</html>
